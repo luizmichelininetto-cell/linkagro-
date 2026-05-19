@@ -29,7 +29,7 @@ SUBCATEGORIAS = {
     "lavoura":   ["Soja", "Milho", "Operacional", "M.O.", "Investimento"],
     "pecuaria":  ["Alimentação", "Ração", "Medicamento", "Investimento", "Operacional", "M.O."],
     "investimento": [],
-    "sede":      [],
+    "sede":      ["Manutenção", "Limpeza", "Investimento"],
 }
 
 
