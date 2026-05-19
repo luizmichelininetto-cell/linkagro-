@@ -6,6 +6,7 @@ import DetalhePage from "./pages/DetalhePage";
 import ExportPage from "./pages/ExportPage";
 import ContasAPagarPage from "./pages/ContasAPagarPage";
 import DashboardPage from "./pages/DashboardPage";
+import { LMAgroSidebarLogo } from "./components/LMAgroLogo";
 import "./App.css";
 
 export default function App() {
@@ -13,7 +14,7 @@ export default function App() {
     <div className="layout">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <ScanLine size={20} /> NF <span>Scanner</span>
+          <LMAgroSidebarLogo />
         </div>
         <nav>
           <NavLink to="/" end className={({ isActive }) => isActive ? "active" : ""}>
