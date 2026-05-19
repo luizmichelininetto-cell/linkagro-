@@ -1,0 +1,91 @@
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Enum, CheckConstraint
+from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy.ext.asyncio import AsyncAttrs
+from datetime import datetime
+import enum
+
+
+class Base(AsyncAttrs, DeclarativeBase):
+    pass
+
+
+class FormaPagamento(str, enum.Enum):
+    CREDITO = "credito"
+    DEBITO = "debito"
+    PIX = "pix"
+    BOLETO = "boleto"
+    DINHEIRO = "dinheiro"
+    DESCONHECIDO = "desconhecido"
+
+
+class CentroCusto(str, enum.Enum):
+    LAVOURA = "lavoura"
+    PECUARIA = "pecuaria"
+    INVESTIMENTO = "investimento"
+    SEDE = "sede"
+
+
+class NotaFiscal(Base):
+    __tablename__ = "notas_fiscais"
+
+    id = Column(Integer, primary_key=True, index=True)
+    numero_nf = Column(String(100), nullable=True, index=True)
+    fornecedor = Column(String(255), nullable=True)
+    data_emissao = Column(String(20), nullable=True)
+    valor_total = Column(Float, nullable=True)
+    forma_pagamento = Column(Enum(FormaPagamento), default=FormaPagamento.DESCONHECIDO)
+    chave_acesso = Column(String(50), nullable=True)
+    texto_ocr = Column(Text, nullable=True)
+    imagem_path = Column(String(500), nullable=True)
+    criado_em = Column(DateTime, default=datetime.utcnow)
+    atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    itens = relationship("ItemNF", back_populates="nota", cascade="all, delete-orphan")
+    rateios = relationship("RateioNota", back_populates="nota", cascade="all, delete-orphan")
+
+
+class ItemNF(Base):
+    __tablename__ = "itens_nf"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nota_id = Column(Integer, ForeignKey("notas_fiscais.id"), nullable=False)
+    descricao = Column(String(500), nullable=False)
+    quantidade = Column(Float, nullable=True)
+    unidade = Column(String(20), nullable=True)
+    valor_unitario = Column(Float, nullable=True)
+    valor_total = Column(Float, nullable=True)
+
+    nota = relationship("NotaFiscal", back_populates="itens")
+    rateios = relationship("RateioItem", back_populates="item", cascade="all, delete-orphan")
+
+
+class RateioNota(Base):
+    """Divisão percentual da nota inteira entre centros de custo."""
+    __tablename__ = "rateios_nota"
+    __table_args__ = (
+        CheckConstraint("percentual > 0 AND percentual <= 100", name="ck_rateio_nota_percentual"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    nota_id = Column(Integer, ForeignKey("notas_fiscais.id"), nullable=False)
+    centro_custo = Column(Enum(CentroCusto), nullable=False, index=True)
+    percentual = Column(Float, nullable=False)
+    valor_calculado = Column(Float, nullable=True)
+
+    nota = relationship("NotaFiscal", back_populates="rateios")
+
+
+class RateioItem(Base):
+    """Divisão percentual de um item específico entre centros de custo."""
+    __tablename__ = "rateios_item"
+    __table_args__ = (
+        CheckConstraint("percentual > 0 AND percentual <= 100", name="ck_rateio_item_percentual"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    item_id = Column(Integer, ForeignKey("itens_nf.id"), nullable=False)
+    centro_custo = Column(Enum(CentroCusto), nullable=False, index=True)
+    percentual = Column(Float, nullable=False)
+    valor_calculado = Column(Float, nullable=True)
+
+    item = relationship("ItemNF", back_populates="rateios")
