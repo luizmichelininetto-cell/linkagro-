@@ -2,10 +2,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from app.config import settings
 from app.models.nota_fiscal import Base
 
+_is_sqlite = settings.DATABASE_URL.startswith("sqlite")
+
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.APP_ENV == "development",
     future=True,
+    **({} if not _is_sqlite else {"connect_args": {"check_same_thread": False}}),
 )
 
 AsyncSessionLocal = async_sessionmaker(

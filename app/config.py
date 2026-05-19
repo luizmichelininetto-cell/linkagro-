@@ -1,5 +1,15 @@
 from pydantic_settings import BaseSettings
 from typing import List
+import os
+
+
+def _fix_db_url(url: str) -> str:
+    """Railway injeta postgres:// mas SQLAlchemy async precisa de postgresql+asyncpg://"""
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgresql://") and "+asyncpg" not in url:
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
 
 
 class Settings(BaseSettings):
@@ -26,3 +36,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+settings.DATABASE_URL = _fix_db_url(settings.DATABASE_URL)
