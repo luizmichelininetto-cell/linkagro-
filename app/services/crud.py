@@ -54,8 +54,7 @@ async def create_nota(db: AsyncSession, data: NotaFiscalCreate, texto_ocr: str =
             ))
 
     await db.commit()
-    await db.refresh(nota)
-    return nota
+    return await get_nota(db, nota.id)
 
 
 async def get_nota(db: AsyncSession, nota_id: int) -> Optional[NotaFiscal]:
