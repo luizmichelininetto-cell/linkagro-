@@ -54,6 +54,7 @@ button { cursor: pointer; }
 .badge-blue   { background: #e0f2fe; color: #0369a1; }
 .badge-green  { background: #dcfce7; color: #15803d; }
 .badge-yellow { background: #fef9c3; color: #854d0e; }
+.badge-red    { background: #fee2e2; color: #b91c1c; }
 .badge-gray   { background: #f1f5f9; color: #475569; }
 
 /* table */

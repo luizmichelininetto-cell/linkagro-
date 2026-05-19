@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, PlusCircle, Trash2 } from "lucide-react";
-import { getNota, aplicarRateioNota, aplicarRateioItem } from "../api";
+import { ArrowLeft, Save, PlusCircle, Trash2, CreditCard } from "lucide-react";
+import { getNota, aplicarRateioNota, aplicarRateioItem, atualizarPagamento } from "../api";
 
 const CENTROS = ["lavoura", "pecuaria", "investimento", "sede"];
 
@@ -15,6 +15,9 @@ const FORMA_LABEL = {
   credito: "Crédito", debito: "Débito", pix: "PIX",
   boleto: "Boleto", dinheiro: "Dinheiro", desconhecido: "—",
 };
+
+const STATUS_LABEL = { pendente: "Pendente", pago: "Pago", vencido: "Vencido" };
+const STATUS_COLOR = { pendente: "#f59e0b", pago: "#16a34a", vencido: "#dc2626" };
 
 function RateioEditor({ valorBase, rateiosIniciais, onSave, saving }) {
   const [linhas, setLinhas] = useState(
@@ -84,11 +87,18 @@ export default function DetalhePage() {
   const [loading, setLoading] = useState(true);
   const [savingNota, setSavingNota] = useState(false);
   const [savingItem, setSavingItem] = useState(null);
+  const [savingPgto, setSavingPgto] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [pgtoForm, setPgtoForm] = useState(null);
 
   const carregar = async () => {
     const { data } = await getNota(id);
     setNota(data);
+    setPgtoForm({
+      status_pagamento: data.status_pagamento || "pendente",
+      data_vencimento: data.data_vencimento || "",
+      data_pagamento: data.data_pagamento || "",
+    });
     setLoading(false);
   };
 
@@ -97,6 +107,19 @@ export default function DetalhePage() {
   const flash = (texto, tipo = "success") => {
     setMsg({ texto, tipo });
     setTimeout(() => setMsg(null), 3000);
+  };
+
+  const salvarPagamento = async () => {
+    setSavingPgto(true);
+    try {
+      await atualizarPagamento(id, pgtoForm);
+      await carregar();
+      flash("Status de pagamento atualizado.");
+    } catch (e) {
+      flash(e.response?.data?.detail || "Erro ao atualizar pagamento.", "error");
+    } finally {
+      setSavingPgto(false);
+    }
   };
 
   const salvarRateioNota = async (linhas) => {
@@ -159,6 +182,40 @@ export default function DetalhePage() {
             </div>
           ))}
         </div>
+
+        <div className="section-title" style={{ marginTop: 20 }}>Pagamento</div>
+        {pgtoForm && (
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 12 }}>
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 4 }}>Status</label>
+              <select
+                value={pgtoForm.status_pagamento}
+                onChange={(e) => setPgtoForm((p) => ({ ...p, status_pagamento: e.target.value }))}
+                style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 14,
+                  color: STATUS_COLOR[pgtoForm.status_pagamento] || "#1e293b", fontWeight: 600 }}
+              >
+                {Object.entries(STATUS_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 4 }}>Vencimento</label>
+              <input type="date" value={pgtoForm.data_vencimento}
+                onChange={(e) => setPgtoForm((p) => ({ ...p, data_vencimento: e.target.value }))}
+                style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 14 }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 4 }}>Data pagamento</label>
+              <input type="date" value={pgtoForm.data_pagamento}
+                onChange={(e) => setPgtoForm((p) => ({ ...p, data_pagamento: e.target.value }))}
+                style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 14 }}
+              />
+            </div>
+            <button className="btn btn-green" disabled={savingPgto} onClick={salvarPagamento}>
+              {savingPgto ? <span className="spinner" /> : <CreditCard size={14} />} Salvar pagamento
+            </button>
+          </div>
+        )}
 
         <div className="section-title">Rateio da Nota (aplica a todos os itens sem rateio próprio)</div>
         <RateioEditor

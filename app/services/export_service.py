@@ -43,6 +43,9 @@ def notas_to_dataframe(notas: List[NotaFiscal]) -> pd.DataFrame:
                     "Quantidade": item.quantidade, "Unidade": item.unidade,
                     "Valor Unitário": item.valor_unitario, "Valor Total Item": item.valor_total,
                     "Nível Rateio": "item" if rateio_item else ("nota" if rateio_nota else None),
+                    "Status Pgto": nota.status_pagamento.value if nota.status_pagamento else None,
+                    "Vencimento": nota.data_vencimento,
+                    "Data Pgto": nota.data_pagamento,
                     "Lançado em": nota.criado_em.strftime("%d/%m/%Y %H:%M"),
                 }
                 for c in CENTROS:
@@ -59,6 +62,9 @@ def notas_to_dataframe(notas: List[NotaFiscal]) -> pd.DataFrame:
                 "Quantidade": None, "Unidade": None, "Valor Unitário": None,
                 "Valor Total Item": None,
                 "Nível Rateio": "nota" if rateio_nota else None,
+                "Status Pgto": nota.status_pagamento.value if nota.status_pagamento else None,
+                "Vencimento": nota.data_vencimento,
+                "Data Pgto": nota.data_pagamento,
                 "Lançado em": nota.criado_em.strftime("%d/%m/%Y %H:%M"),
             }
             for c in CENTROS:

@@ -18,6 +18,12 @@ class FormaPagamento(str, enum.Enum):
     DESCONHECIDO = "desconhecido"
 
 
+class StatusPagamento(str, enum.Enum):
+    PENDENTE = "pendente"
+    PAGO = "pago"
+    VENCIDO = "vencido"
+
+
 class CentroCusto(str, enum.Enum):
     LAVOURA = "lavoura"
     PECUARIA = "pecuaria"
@@ -45,6 +51,9 @@ class NotaFiscal(Base):
     chave_acesso = Column(String(50), nullable=True)
     texto_ocr = Column(Text, nullable=True)
     imagem_path = Column(String(500), nullable=True)
+    status_pagamento = Column(Enum(StatusPagamento), default=StatusPagamento.PENDENTE, nullable=False)
+    data_vencimento = Column(String(20), nullable=True)
+    data_pagamento = Column(String(20), nullable=True)
     criado_em = Column(DateTime, default=datetime.utcnow)
     atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

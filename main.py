@@ -7,7 +7,7 @@ from pathlib import Path
 import logging
 
 from app.database import init_db
-from app.routes import scan, notas, exportar
+from app.routes import scan, notas, exportar, dashboard
 from app.config import settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
@@ -33,6 +33,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True,
 app.include_router(scan.router)
 app.include_router(notas.router)
 app.include_router(exportar.router)
+app.include_router(dashboard.router)
 
 
 @app.get("/health", tags=["Health"])

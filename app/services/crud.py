@@ -3,7 +3,9 @@ from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from app.models.nota_fiscal import NotaFiscal, ItemNF, RateioNota, RateioItem, FormaPagamento, CentroCusto
-from app.schemas.nota_fiscal import NotaFiscalCreate, AplicarRateioNotaRequest, AplicarRateioItemRequest
+from app.schemas.nota_fiscal import NotaFiscalCreate, AplicarRateioNotaRequest, AplicarRateioItemRequest, AtualizarPagamentoRequest
+from app.models.nota_fiscal import StatusPagamento
+from datetime import date
 
 
 def _calc_valor(base: Optional[float], percentual: float) -> Optional[float]:
@@ -78,6 +80,7 @@ async def list_notas(
     fornecedor: Optional[str] = None,
     forma_pagamento: Optional[FormaPagamento] = None,
     centro_custo: Optional[CentroCusto] = None,
+    status_pagamento: Optional[StatusPagamento] = None,
 ) -> List[NotaFiscal]:
     query = (
         select(NotaFiscal)
@@ -90,6 +93,8 @@ async def list_notas(
         query = query.where(NotaFiscal.fornecedor.ilike(f"%{fornecedor}%"))
     if forma_pagamento:
         query = query.where(NotaFiscal.forma_pagamento == forma_pagamento)
+    if status_pagamento:
+        query = query.where(NotaFiscal.status_pagamento == status_pagamento)
     if centro_custo:
         query = query.where(
             NotaFiscal.id.in_(select(RateioNota.nota_id).where(RateioNota.centro_custo == centro_custo)) |
@@ -154,6 +159,25 @@ async def aplicar_rateio_nota(db: AsyncSession, nota_id: int, payload: AplicarRa
             percentual=r.percentual,
             valor_calculado=_calc_valor(nota.valor_total, r.percentual),
         ))
+    await db.commit()
+    return await get_nota(db, nota_id)
+
+
+async def atualizar_pagamento(db: AsyncSession, nota_id: int, payload: AtualizarPagamentoRequest) -> Optional[NotaFiscal]:
+    nota = await get_nota(db, nota_id)
+    if not nota:
+        return None
+    nota.status_pagamento = payload.status_pagamento
+    nota.data_vencimento = payload.data_vencimento
+    nota.data_pagamento = payload.data_pagamento
+    # auto-mark overdue if status not overridden
+    if payload.status_pagamento == StatusPagamento.PENDENTE and payload.data_vencimento:
+        try:
+            venc = date.fromisoformat(payload.data_vencimento)
+            if venc < date.today():
+                nota.status_pagamento = StatusPagamento.VENCIDO
+        except ValueError:
+            pass
     await db.commit()
     return await get_nota(db, nota_id)
 

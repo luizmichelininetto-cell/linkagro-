@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional
 from datetime import datetime
-from app.models.nota_fiscal import FormaPagamento, CentroCusto
+from app.models.nota_fiscal import FormaPagamento, CentroCusto, StatusPagamento
 
 
 # ── Rateio ─────────────────────────────────────────────────────────────────
@@ -90,6 +90,9 @@ class NotaFiscalBase(BaseModel):
     valor_total: Optional[float] = None
     forma_pagamento: Optional[FormaPagamento] = FormaPagamento.DESCONHECIDO
     chave_acesso: Optional[str] = None
+    status_pagamento: Optional[StatusPagamento] = StatusPagamento.PENDENTE
+    data_vencimento: Optional[str] = None
+    data_pagamento: Optional[str] = None
 
 
 class NotaFiscalCreate(NotaFiscalBase):
@@ -126,6 +129,9 @@ class NotaFiscalSummary(BaseModel):
     data_emissao: Optional[str]
     valor_total: Optional[float]
     forma_pagamento: Optional[FormaPagamento]
+    status_pagamento: Optional[StatusPagamento]
+    data_vencimento: Optional[str]
+    data_pagamento: Optional[str]
     criado_em: datetime
 
     class Config:
@@ -162,6 +168,14 @@ class ScanResponse(BaseModel):
     texto_ocr: Optional[str] = None
     erro: Optional[str] = None
     confianca: Optional[float] = Field(None, description="0.0 a 1.0")
+
+
+# ── Atualizar pagamento ─────────────────────────────────────────────────────
+
+class AtualizarPagamentoRequest(BaseModel):
+    status_pagamento: StatusPagamento
+    data_vencimento: Optional[str] = None
+    data_pagamento: Optional[str] = None
 
 
 # ── Exportação ──────────────────────────────────────────────────────────────

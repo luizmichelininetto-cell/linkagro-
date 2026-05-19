@@ -13,10 +13,15 @@ const FORMA_BADGE = {
   boleto: "badge-yellow", dinheiro: "badge-gray", desconhecido: "badge-gray",
 };
 
+const STATUS_LABEL = { pendente: "Pendente", pago: "Pago", vencido: "Vencido" };
+const STATUS_BADGE = { pendente: "badge-yellow", pago: "badge-green", vencido: "badge-red" };
+
 export default function NotasPage() {
   const [notas, setNotas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filtros, setFiltros] = useState({ fornecedor: "", forma_pagamento: "", centro_custo: "" });
+  const [filtros, setFiltros] = useState({
+    fornecedor: "", forma_pagamento: "", centro_custo: "", status_pagamento: "",
+  });
   const navigate = useNavigate();
 
   const carregar = async () => {
@@ -26,6 +31,7 @@ export default function NotasPage() {
       if (filtros.fornecedor) params.fornecedor = filtros.fornecedor;
       if (filtros.forma_pagamento) params.forma_pagamento = filtros.forma_pagamento;
       if (filtros.centro_custo) params.centro_custo = filtros.centro_custo;
+      if (filtros.status_pagamento) params.status_pagamento = filtros.status_pagamento;
       const { data } = await listNotas(params);
       setNotas(data);
     } finally {
@@ -56,7 +62,7 @@ export default function NotasPage() {
           />
         </div>
         <div>
-          <label>Pagamento</label>
+          <label>Forma Pgto</label>
           <select value={filtros.forma_pagamento} onChange={(e) => setFiltros((f) => ({ ...f, forma_pagamento: e.target.value }))}>
             <option value="">Todos</option>
             {Object.entries(FORMA_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -69,6 +75,13 @@ export default function NotasPage() {
             {["lavoura", "pecuaria", "investimento", "sede"].map((c) => (
               <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
             ))}
+          </select>
+        </div>
+        <div>
+          <label>Status Pgto</label>
+          <select value={filtros.status_pagamento} onChange={(e) => setFiltros((f) => ({ ...f, status_pagamento: e.target.value }))}>
+            <option value="">Todos</option>
+            {Object.entries(STATUS_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
           </select>
         </div>
         <button className="btn btn-primary" onClick={carregar}><Search size={15} /> Filtrar</button>
@@ -89,7 +102,9 @@ export default function NotasPage() {
                   <th>Número NF</th>
                   <th>Data</th>
                   <th>Valor Total</th>
-                  <th>Pagamento</th>
+                  <th>Forma Pgto</th>
+                  <th>Status</th>
+                  <th>Vencimento</th>
                   <th></th>
                 </tr>
               </thead>
@@ -106,6 +121,12 @@ export default function NotasPage() {
                         {FORMA_LABEL[n.forma_pagamento] || "—"}
                       </span>
                     </td>
+                    <td>
+                      <span className={`badge ${STATUS_BADGE[n.status_pagamento] || "badge-gray"}`}>
+                        {STATUS_LABEL[n.status_pagamento] || "—"}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: 13 }}>{n.data_vencimento || "—"}</td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <button className="btn btn-danger" style={{ padding: "4px 8px" }} onClick={(e) => handleDelete(e, n.id)}>
                         <Trash2 size={14} />

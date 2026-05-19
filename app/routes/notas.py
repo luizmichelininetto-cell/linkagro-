@@ -8,8 +8,9 @@ from app.schemas.nota_fiscal import (
     NotaFiscalOut, NotaFiscalSummary,
     AplicarRateioNotaRequest, AplicarRateioItemRequest,
     RateioNotaOut, RateioItemOut,
+    AtualizarPagamentoRequest,
 )
-from app.models.nota_fiscal import FormaPagamento, CentroCusto
+from app.models.nota_fiscal import FormaPagamento, CentroCusto, StatusPagamento
 
 router = APIRouter(prefix="/notas", tags=["Notas Fiscais"], dependencies=[Depends(verify_api_key)])
 
@@ -20,10 +21,12 @@ async def list_notas(
     fornecedor: Optional[str] = Query(None),
     forma_pagamento: Optional[FormaPagamento] = Query(None),
     centro_custo: Optional[CentroCusto] = Query(None),
+    status_pagamento: Optional[StatusPagamento] = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
     return await crud.list_notas(db, skip=skip, limit=limit, fornecedor=fornecedor,
-                                  forma_pagamento=forma_pagamento, centro_custo=centro_custo)
+                                  forma_pagamento=forma_pagamento, centro_custo=centro_custo,
+                                  status_pagamento=status_pagamento)
 
 
 @router.get("/{nota_id}", response_model=NotaFiscalOut)
@@ -39,6 +42,15 @@ async def delete_nota(nota_id: int, db: AsyncSession = Depends(get_db)):
     if not await crud.delete_nota(db, nota_id):
         raise HTTPException(404, "Nota fiscal não encontrada")
     return {"mensagem": "Nota excluída com sucesso"}
+
+
+@router.patch("/{nota_id}/pagamento", response_model=NotaFiscalOut,
+              summary="Atualizar status e datas de pagamento")
+async def atualizar_pagamento(nota_id: int, payload: AtualizarPagamentoRequest, db: AsyncSession = Depends(get_db)):
+    nota = await crud.atualizar_pagamento(db, nota_id, payload)
+    if not nota:
+        raise HTTPException(404, "Nota fiscal não encontrada")
+    return nota
 
 
 @router.patch("/{nota_id}/rateio", response_model=NotaFiscalOut,

@@ -14,6 +14,7 @@ export default defineConfig({
       "/scan": "http://localhost:8000",
       "/notas": "http://localhost:8000",
       "/exportar": "http://localhost:8000",
+      "/dashboard": "http://localhost:8000",
     },
   },
 });

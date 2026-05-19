@@ -33,4 +33,9 @@ export const exportExcel = (params) =>
 export const exportCsv = (params) =>
   api.get("/exportar/csv", { params, responseType: "blob" });
 
+export const atualizarPagamento = (id, payload) =>
+  api.patch(`/notas/${id}/pagamento`, payload);
+
+export const getDashboard = () => api.get("/dashboard/");
+
 export default api;
