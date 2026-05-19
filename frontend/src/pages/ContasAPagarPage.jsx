@@ -115,7 +115,7 @@ export default function ContasAPagarPage() {
                 {notas.map((n) => {
                   const prazo = diasLabel(n.data_vencimento);
                   return (
-                    <tr key={n.id} onClick={() => navigate(`/notas/${n.id}`)} style={{ cursor: "pointer" }}>
+                    <tr key={n.id} onClick={() => navigate(`/app/notas/${n.id}`)} style={{ cursor: "pointer" }}>
                       <td style={{ color: "#94a3b8" }}>{n.id}</td>
                       <td><strong>{n.fornecedor || "—"}</strong></td>
                       <td>{n.valor_total != null ? `R$ ${n.valor_total.toFixed(2)}` : "—"}</td>

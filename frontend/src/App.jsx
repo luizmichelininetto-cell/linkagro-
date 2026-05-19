@@ -1,4 +1,4 @@
-import { Routes, Route, NavLink } from "react-router-dom";
+import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 import { ScanLine, FileText, Download, AlertCircle, LayoutDashboard } from "lucide-react";
 import ScanPage from "./pages/ScanPage";
 import NotasPage from "./pages/NotasPage";
@@ -6,10 +6,11 @@ import DetalhePage from "./pages/DetalhePage";
 import ExportPage from "./pages/ExportPage";
 import ContasAPagarPage from "./pages/ContasAPagarPage";
 import DashboardPage from "./pages/DashboardPage";
+import LandingPage from "./pages/LandingPage";
 import { LMAgroSidebarLogo } from "./components/LMAgroLogo";
 import "./App.css";
 
-export default function App() {
+function AppLayout() {
   return (
     <div className="layout">
       <aside className="sidebar">
@@ -17,19 +18,19 @@ export default function App() {
           <LMAgroSidebarLogo />
         </div>
         <nav>
-          <NavLink to="/" end className={({ isActive }) => isActive ? "active" : ""}>
+          <NavLink to="/app" end className={({ isActive }) => isActive ? "active" : ""}>
             <ScanLine size={16} /> Escanear
           </NavLink>
-          <NavLink to="/notas" className={({ isActive }) => isActive ? "active" : ""}>
+          <NavLink to="/app/notas" className={({ isActive }) => isActive ? "active" : ""}>
             <FileText size={16} /> Notas
           </NavLink>
-          <NavLink to="/contas" className={({ isActive }) => isActive ? "active" : ""}>
+          <NavLink to="/app/contas" className={({ isActive }) => isActive ? "active" : ""}>
             <AlertCircle size={16} /> Contas a Pagar
           </NavLink>
-          <NavLink to="/dashboard" className={({ isActive }) => isActive ? "active" : ""}>
+          <NavLink to="/app/dashboard" className={({ isActive }) => isActive ? "active" : ""}>
             <LayoutDashboard size={16} /> Painel Financeiro
           </NavLink>
-          <NavLink to="/exportar" className={({ isActive }) => isActive ? "active" : ""}>
+          <NavLink to="/app/exportar" className={({ isActive }) => isActive ? "active" : ""}>
             <Download size={16} /> Exportar
           </NavLink>
         </nav>
@@ -37,14 +38,28 @@ export default function App() {
 
       <main className="main">
         <Routes>
-          <Route path="/" element={<ScanPage />} />
-          <Route path="/notas" element={<NotasPage />} />
-          <Route path="/notas/:id" element={<DetalhePage />} />
-          <Route path="/contas" element={<ContasAPagarPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/exportar" element={<ExportPage />} />
+          <Route index element={<ScanPage />} />
+          <Route path="notas" element={<NotasPage />} />
+          <Route path="notas/:id" element={<DetalhePage />} />
+          <Route path="contas" element={<ContasAPagarPage />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="exportar" element={<ExportPage />} />
         </Routes>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/app/*" element={<AppLayout />} />
+      {/* compatibilidade com rotas antigas */}
+      <Route path="/notas/*" element={<Navigate to="/app/notas" replace />} />
+      <Route path="/contas" element={<Navigate to="/app/contas" replace />} />
+      <Route path="/dashboard" element={<Navigate to="/app/dashboard" replace />} />
+      <Route path="/exportar" element={<Navigate to="/app/exportar" replace />} />
+    </Routes>
   );
 }

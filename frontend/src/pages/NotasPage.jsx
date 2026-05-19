@@ -110,7 +110,7 @@ export default function NotasPage() {
               </thead>
               <tbody>
                 {notas.map((n) => (
-                  <tr key={n.id} onClick={() => navigate(`/notas/${n.id}`)} style={{ cursor: "pointer" }}>
+                  <tr key={n.id} onClick={() => navigate(`/app/notas/${n.id}`)} style={{ cursor: "pointer" }}>
                     <td style={{ color: "#94a3b8" }}>{n.id}</td>
                     <td><strong>{n.fornecedor || "—"}</strong></td>
                     <td>{n.numero_nf || "—"}</td>

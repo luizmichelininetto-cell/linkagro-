@@ -154,7 +154,7 @@ export default function DetalhePage() {
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-        <button className="btn btn-ghost" onClick={() => navigate("/notas")}>
+        <button className="btn btn-ghost" onClick={() => navigate("/app/notas")}>
           <ArrowLeft size={16} /> Voltar
         </button>
         <div className="page-title" style={{ margin: 0 }}>
