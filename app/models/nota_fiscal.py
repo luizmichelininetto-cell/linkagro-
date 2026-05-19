@@ -25,6 +25,14 @@ class CentroCusto(str, enum.Enum):
     SEDE = "sede"
 
 
+SUBCATEGORIAS = {
+    "lavoura":   ["Soja", "Milho", "Operacional", "M.O.", "Investimento"],
+    "pecuaria":  ["Alimentação", "Ração", "Medicamento", "Investimento", "Operacional", "M.O."],
+    "investimento": [],
+    "sede":      [],
+}
+
+
 class NotaFiscal(Base):
     __tablename__ = "notas_fiscais"
 
@@ -69,6 +77,7 @@ class RateioNota(Base):
     id = Column(Integer, primary_key=True, index=True)
     nota_id = Column(Integer, ForeignKey("notas_fiscais.id"), nullable=False)
     centro_custo = Column(Enum(CentroCusto), nullable=False, index=True)
+    sub_categoria = Column(String(50), nullable=True)
     percentual = Column(Float, nullable=False)
     valor_calculado = Column(Float, nullable=True)
 
@@ -85,6 +94,7 @@ class RateioItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     item_id = Column(Integer, ForeignKey("itens_nf.id"), nullable=False)
     centro_custo = Column(Enum(CentroCusto), nullable=False, index=True)
+    sub_categoria = Column(String(50), nullable=True)
     percentual = Column(Float, nullable=False)
     valor_calculado = Column(Float, nullable=True)
 

@@ -30,6 +30,7 @@ async def create_nota(db: AsyncSession, data: NotaFiscalCreate, texto_ocr: str =
         db.add(RateioNota(
             nota_id=nota.id,
             centro_custo=r.centro_custo,
+            sub_categoria=r.sub_categoria,
             percentual=r.percentual,
             valor_calculado=_calc_valor(data.valor_total, r.percentual),
         ))
@@ -49,6 +50,7 @@ async def create_nota(db: AsyncSession, data: NotaFiscalCreate, texto_ocr: str =
             db.add(RateioItem(
                 item_id=item.id,
                 centro_custo=r.centro_custo,
+                sub_categoria=r.sub_categoria,
                 percentual=r.percentual,
                 valor_calculado=_calc_valor(item_data.valor_total, r.percentual),
             ))
@@ -148,6 +150,7 @@ async def aplicar_rateio_nota(db: AsyncSession, nota_id: int, payload: AplicarRa
         db.add(RateioNota(
             nota_id=nota_id,
             centro_custo=r.centro_custo,
+            sub_categoria=r.sub_categoria,
             percentual=r.percentual,
             valor_calculado=_calc_valor(nota.valor_total, r.percentual),
         ))
@@ -167,6 +170,7 @@ async def aplicar_rateio_item(db: AsyncSession, item_id: int, payload: AplicarRa
         db.add(RateioItem(
             item_id=item_id,
             centro_custo=r.centro_custo,
+            sub_categoria=r.sub_categoria,
             percentual=r.percentual,
             valor_calculado=_calc_valor(item.valor_total, r.percentual),
         ))

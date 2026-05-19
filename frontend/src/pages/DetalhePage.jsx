@@ -4,6 +4,13 @@ import { ArrowLeft, Save, PlusCircle, Trash2 } from "lucide-react";
 import { getNota, aplicarRateioNota, aplicarRateioItem } from "../api";
 
 const CENTROS = ["lavoura", "pecuaria", "investimento", "sede"];
+
+const SUBCATEGORIAS = {
+  lavoura:      ["Soja", "Milho", "Operacional", "M.O.", "Investimento"],
+  pecuaria:     ["Alimentação", "Ração", "Medicamento", "Investimento", "Operacional", "M.O."],
+  investimento: [],
+  sede:         [],
+};
 const FORMA_LABEL = {
   credito: "Crédito", debito: "Débito", pix: "PIX",
   boleto: "Boleto", dinheiro: "Dinheiro", desconhecido: "—",
@@ -12,8 +19,8 @@ const FORMA_LABEL = {
 function RateioEditor({ valorBase, rateiosIniciais, onSave, saving }) {
   const [linhas, setLinhas] = useState(
     rateiosIniciais.length > 0
-      ? rateiosIniciais.map((r) => ({ centro_custo: r.centro_custo, percentual: r.percentual }))
-      : [{ centro_custo: "lavoura", percentual: 100 }]
+      ? rateiosIniciais.map((r) => ({ centro_custo: r.centro_custo, sub_categoria: r.sub_categoria || "", percentual: r.percentual }))
+      : [{ centro_custo: "lavoura", sub_categoria: "", percentual: 100 }]
   );
 
   const soma = linhas.reduce((s, l) => s + Number(l.percentual || 0), 0);
@@ -29,6 +36,12 @@ function RateioEditor({ valorBase, rateiosIniciais, onSave, saving }) {
           <select value={l.centro_custo} onChange={(e) => update(i, "centro_custo", e.target.value)}>
             {CENTROS.map((c) => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
           </select>
+          {SUBCATEGORIAS[l.centro_custo]?.length > 0 && (
+            <select value={l.sub_categoria || ""} onChange={(e) => update(i, "sub_categoria", e.target.value)}>
+              <option value="">— subcategoria —</option>
+              {SUBCATEGORIAS[l.centro_custo].map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          )}
           <input
             type="number" min="0.01" max="100" step="0.01"
             value={l.percentual}
@@ -50,7 +63,7 @@ function RateioEditor({ valorBase, rateiosIniciais, onSave, saving }) {
       ))}
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
-        <button className="btn btn-ghost" onClick={() => setLinhas((p) => [...p, { centro_custo: "lavoura", percentual: 0 }])}>
+        <button className="btn btn-ghost" onClick={() => setLinhas((p) => [...p, { centro_custo: "lavoura", sub_categoria: "", percentual: 0 }])}>
           <PlusCircle size={14} /> Adicionar centro
         </button>
         <span style={{ fontSize: 13, color: valido ? "#16a34a" : "#dc2626", marginLeft: "auto" }}>

@@ -8,6 +8,7 @@ from app.models.nota_fiscal import FormaPagamento, CentroCusto
 
 class RateioBase(BaseModel):
     centro_custo: CentroCusto
+    sub_categoria: Optional[str] = None
     percentual: float = Field(..., gt=0, le=100, description="Percentual de 0.01 a 100")
 
 
@@ -18,6 +19,7 @@ class RateioNotaCreate(RateioBase):
 class RateioNotaOut(RateioBase):
     id: int
     nota_id: int
+    sub_categoria: Optional[str] = None
     valor_calculado: Optional[float] = None
 
     class Config:
@@ -31,6 +33,7 @@ class RateioItemCreate(RateioBase):
 class RateioItemOut(RateioBase):
     id: int
     item_id: int
+    sub_categoria: Optional[str] = None
     valor_calculado: Optional[float] = None
 
     class Config:

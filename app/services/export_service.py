@@ -10,19 +10,30 @@ def _rateio_nota_map(nota: NotaFiscal) -> dict:
     return {r.centro_custo.value: r.valor_calculado for r in (nota.rateios or [])}
 
 
+def _rateio_nota_sub_map(nota: NotaFiscal) -> dict:
+    return {r.centro_custo.value: r.sub_categoria for r in (nota.rateios or [])}
+
+
 def _rateio_item_map(item) -> dict:
     return {r.centro_custo.value: r.valor_calculado for r in (item.rateios or [])}
+
+
+def _rateio_item_sub_map(item) -> dict:
+    return {r.centro_custo.value: r.sub_categoria for r in (item.rateios or [])}
 
 
 def notas_to_dataframe(notas: List[NotaFiscal]) -> pd.DataFrame:
     rows = []
     for nota in notas:
         rateio_nota = _rateio_nota_map(nota)
+        rateio_nota_sub = _rateio_nota_sub_map(nota)
         itens = nota.itens or []
         if itens:
             for item in itens:
                 rateio_item = _rateio_item_map(item)
+                rateio_item_sub = _rateio_item_sub_map(item)
                 rateio_efetivo = rateio_item if rateio_item else rateio_nota
+                sub_efetivo = rateio_item_sub if rateio_item else rateio_nota_sub
                 row = {
                     "ID Nota": nota.id, "Número NF": nota.numero_nf,
                     "Fornecedor": nota.fornecedor, "Data Emissão": nota.data_emissao,
@@ -36,6 +47,7 @@ def notas_to_dataframe(notas: List[NotaFiscal]) -> pd.DataFrame:
                 }
                 for c in CENTROS:
                     row[f"CC {c.capitalize()}"] = rateio_efetivo.get(c)
+                    row[f"Sub {c.capitalize()}"] = sub_efetivo.get(c)
                 rows.append(row)
         else:
             row = {
@@ -51,6 +63,7 @@ def notas_to_dataframe(notas: List[NotaFiscal]) -> pd.DataFrame:
             }
             for c in CENTROS:
                 row[f"CC {c.capitalize()}"] = rateio_nota.get(c)
+                row[f"Sub {c.capitalize()}"] = rateio_nota_sub.get(c)
             rows.append(row)
     return pd.DataFrame(rows)
 
