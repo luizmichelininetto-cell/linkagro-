@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { LayoutDashboard, TrendingUp, AlertCircle } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell, LineChart, Line, Legend,
 } from "recharts";
-import { getDashboard } from "../api";
+import { getDashboard, getGastosMensais } from "../api";
 
 const CC_COLORS = {
   lavoura: "#16a34a",
@@ -37,12 +37,13 @@ function KpiCard({ label, valor, sub, color }) {
 
 export default function DashboardPage() {
   const [data, setData] = useState(null);
+  const [mensal, setMensal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);
 
   useEffect(() => {
-    getDashboard()
-      .then(({ data }) => setData(data))
+    Promise.all([getDashboard(), getGastosMensais()])
+      .then(([r1, r2]) => { setData(r1.data); setMensal(r2.data); })
       .catch(() => setErro("Erro ao carregar dashboard."))
       .finally(() => setLoading(false));
   }, []);
@@ -126,20 +127,31 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Evolução Mensal */}
-      {data.evolucao_mensal?.length > 0 && (
-        <Card title="Evolução Mensal (Valor das Notas)" style={{ marginBottom: 16 }}>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={data.evolucao_mensal} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v) => [`R$ ${v.toFixed(2)}`, "Valor"]} />
-              <Bar dataKey="valor" fill="#2563eb" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      )}
+      {/* Gastos Mensais: notas + parcelas */}
+      {mensal?.mensal?.length > 0 && (() => {
+        const hoje = new Date().toISOString().slice(0, 7);
+        const dadosFiltrados = mensal.mensal.filter(
+          (m) => m.notas_emitidas > 0 || m.parcelas_devidas > 0
+        );
+        return dadosFiltrados.length > 0 ? (
+          <Card title="Gastos Mensais — Notas emitidas vs Desembolso (parcelas)" style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 8, display: "flex", gap: 20 }}>
+              <span><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: "#2563eb", marginRight: 4 }} />Notas emitidas (custo do mês)</span>
+              <span><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, background: "#f59e0b", marginRight: 4 }} />Parcelas devidas (desembolso)</span>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={dadosFiltrados} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                <Tooltip formatter={(v, name) => [`R$ ${v.toFixed(2)}`, name === "notas_emitidas" ? "Notas emitidas" : "Parcelas devidas"]} />
+                <Bar dataKey="notas_emitidas" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="parcelas_devidas" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        ) : null;
+      })()}
 
       {/* Alertas de Vencimento */}
       {data.alertas_vencimento?.length > 0 && (

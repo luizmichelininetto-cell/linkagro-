@@ -1,11 +1,12 @@
 import { Routes, Route, NavLink, Navigate } from "react-router-dom";
-import { ScanLine, FileText, Download, AlertCircle, LayoutDashboard } from "lucide-react";
+import { ScanLine, FileText, Download, AlertCircle, LayoutDashboard, Package } from "lucide-react";
 import ScanPage from "./pages/ScanPage";
 import NotasPage from "./pages/NotasPage";
 import DetalhePage from "./pages/DetalhePage";
 import ExportPage from "./pages/ExportPage";
 import ContasAPagarPage from "./pages/ContasAPagarPage";
 import DashboardPage from "./pages/DashboardPage";
+import InsumoPage from "./pages/InsumoPage";
 import LandingPage from "./pages/LandingPage";
 import { LMAgroSidebarLogo } from "./components/LMAgroLogo";
 import "./App.css";
@@ -27,6 +28,9 @@ function AppLayout() {
           <NavLink to="/app/contas" className={({ isActive }) => isActive ? "active" : ""}>
             <AlertCircle size={16} /> Contas a Pagar
           </NavLink>
+          <NavLink to="/app/insumos" className={({ isActive }) => isActive ? "active" : ""}>
+            <Package size={16} /> Insumos
+          </NavLink>
           <NavLink to="/app/dashboard" className={({ isActive }) => isActive ? "active" : ""}>
             <LayoutDashboard size={16} /> Painel Financeiro
           </NavLink>
@@ -42,6 +46,7 @@ function AppLayout() {
           <Route path="notas" element={<NotasPage />} />
           <Route path="notas/:id" element={<DetalhePage />} />
           <Route path="contas" element={<ContasAPagarPage />} />
+          <Route path="insumos" element={<InsumoPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="exportar" element={<ExportPage />} />
         </Routes>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, PlusCircle, Trash2, CreditCard } from "lucide-react";
-import { getNota, aplicarRateioNota, aplicarRateioItem, atualizarPagamento } from "../api";
+import { ArrowLeft, Save, PlusCircle, Trash2, CreditCard, CheckCircle } from "lucide-react";
+import { getNota, aplicarRateioNota, aplicarRateioItem, atualizarPagamento, criarParcelas, atualizarParcela } from "../api";
 
 const CENTROS = ["lavoura", "pecuaria", "investimento", "sede"];
 
@@ -88,8 +88,11 @@ export default function DetalhePage() {
   const [savingNota, setSavingNota] = useState(false);
   const [savingItem, setSavingItem] = useState(null);
   const [savingPgto, setSavingPgto] = useState(false);
+  const [savingParcelas, setSavingParcelas] = useState(false);
+  const [savingParcelaId, setSavingParcelaId] = useState(null);
   const [msg, setMsg] = useState(null);
   const [pgtoForm, setPgtoForm] = useState(null);
+  const [parcelasForm, setParcelasForm] = useState({ num_parcelas: 2, data_primeira_parcela: "" });
 
   const carregar = async () => {
     const { data } = await getNota(id);
@@ -107,6 +110,41 @@ export default function DetalhePage() {
   const flash = (texto, tipo = "success") => {
     setMsg({ texto, tipo });
     setTimeout(() => setMsg(null), 3000);
+  };
+
+  const salvarParcelas = async () => {
+    if (!parcelasForm.data_primeira_parcela) { flash("Informe a data da primeira parcela.", "error"); return; }
+    setSavingParcelas(true);
+    try {
+      // Converte YYYY-MM-DD para DD/MM/YYYY
+      const [y, m, d] = parcelasForm.data_primeira_parcela.split("-");
+      await criarParcelas(id, {
+        num_parcelas: Number(parcelasForm.num_parcelas),
+        data_primeira_parcela: `${d}/${m}/${y}`,
+      });
+      await carregar();
+      flash(`${parcelasForm.num_parcelas}x parcelas criadas com sucesso.`);
+    } catch (e) {
+      flash(e.response?.data?.detail || "Erro ao criar parcelas.", "error");
+    } finally {
+      setSavingParcelas(false);
+    }
+  };
+
+  const marcarParcelaPaga = async (parcelaId) => {
+    setSavingParcelaId(parcelaId);
+    try {
+      await atualizarParcela(parcelaId, {
+        status_pagamento: "pago",
+        data_pagamento: new Date().toISOString().slice(0, 10).split("-").reverse().join("/"),
+      });
+      await carregar();
+      flash("Parcela marcada como paga.");
+    } catch (e) {
+      flash("Erro ao atualizar parcela.", "error");
+    } finally {
+      setSavingParcelaId(null);
+    }
   };
 
   const salvarPagamento = async () => {
@@ -215,6 +253,76 @@ export default function DetalhePage() {
               {savingPgto ? <span className="spinner" /> : <CreditCard size={14} />} Salvar pagamento
             </button>
           </div>
+        )}
+
+        {/* Parcelas — só para cartão de crédito */}
+        {nota.forma_pagamento === "credito" && (
+          <>
+            <div className="section-title" style={{ marginTop: 20 }}>Parcelamento (Cartão de Crédito)</div>
+            {nota.parcelas?.length > 0 ? (
+              <div style={{ marginBottom: 12 }}>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr><th>#</th><th>Vencimento</th><th>Valor</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                      {nota.parcelas.map((p) => (
+                        <tr key={p.id}>
+                          <td style={{ color: "#94a3b8" }}>{p.numero}/{nota.num_parcelas}</td>
+                          <td style={{ fontSize: 13 }}>{p.data_vencimento}</td>
+                          <td style={{ fontWeight: 600 }}>R$ {p.valor.toFixed(2)}</td>
+                          <td>
+                            <span className={`badge ${p.status_pagamento === "pago" ? "badge-green" : "badge-yellow"}`}>
+                              {p.status_pagamento === "pago" ? "Pago" : "Pendente"}
+                            </span>
+                          </td>
+                          <td>
+                            {p.status_pagamento !== "pago" && (
+                              <button className="btn btn-green" style={{ padding: "3px 8px", fontSize: 12 }}
+                                disabled={savingParcelaId === p.id}
+                                onClick={() => marcarParcelaPaga(p.id)}>
+                                {savingParcelaId === p.id ? <span className="spinner" /> : <CheckCircle size={12} />} Pago
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button className="btn btn-ghost" style={{ marginTop: 8, fontSize: 12 }}
+                  onClick={() => { /* toggle recriar */ }}>
+                  Recriar parcelas
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-end", marginBottom: 12, flexWrap: "wrap" }}>
+                <div>
+                  <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 4 }}>Nº de parcelas</label>
+                  <input type="number" min="2" max="48" value={parcelasForm.num_parcelas}
+                    onChange={(e) => setParcelasForm((p) => ({ ...p, num_parcelas: e.target.value }))}
+                    style={{ width: 80, padding: "6px 10px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 14 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: "#64748b", display: "block", marginBottom: 4 }}>1ª parcela</label>
+                  <input type="date" value={parcelasForm.data_primeira_parcela}
+                    onChange={(e) => setParcelasForm((p) => ({ ...p, data_primeira_parcela: e.target.value }))}
+                    style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #e2e8f0", fontSize: 14 }}
+                  />
+                </div>
+                <button className="btn btn-primary" disabled={savingParcelas} onClick={salvarParcelas}>
+                  {savingParcelas ? <span className="spinner" /> : <CreditCard size={14} />} Parcelar
+                </button>
+                {nota.valor_total && parcelasForm.num_parcelas >= 2 && (
+                  <span style={{ fontSize: 13, color: "#64748b", alignSelf: "center" }}>
+                    = R$ {(nota.valor_total / parcelasForm.num_parcelas).toFixed(2)}/mês
+                  </span>
+                )}
+              </div>
+            )}
+          </>
         )}
 
         <div className="section-title">Rateio da Nota (aplica a todos os itens sem rateio próprio)</div>

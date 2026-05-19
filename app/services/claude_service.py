@@ -22,7 +22,7 @@ def get_client() -> anthropic.Anthropic:
     return _client
 
 
-SYSTEM_PROMPT = """Você é um especialista em leitura de notas fiscais e recibos brasileiros.
+SYSTEM_PROMPT = """Você é um especialista em leitura de notas fiscais e recibos brasileiros para uma empresa agrícola.
 Sua tarefa é extrair informações estruturadas do texto OCR ou imagem fornecida.
 
 Retorne SOMENTE um JSON válido, sem markdown, sem explicações, no seguinte formato:
@@ -40,17 +40,36 @@ Retorne SOMENTE um JSON válido, sem markdown, sem explicações, no seguinte fo
       "quantidade": 1.0,
       "unidade": "UN|KG|L|CX|etc",
       "valor_unitario": 0.00,
-      "valor_total": 0.00
+      "valor_total": 0.00,
+      "categoria_produto": "categoria do produto (ver lista abaixo)"
     }
   ]
 }
+
+Categorias de produto disponíveis (escolha a mais adequada para cada item):
+- "Defensivo Agrícola" (herbicidas, fungicidas, inseticidas, roundup, glifosato)
+- "Fertilizante / Adubo" (ureia, MAP, NPK, calcário, gesso agrícola)
+- "Semente" (sementes de soja, milho, sorgo, capim)
+- "Ração / Alimentação Animal" (ração, silagem, feno, milho para animais)
+- "Medicamento / Vacina" (vacinas, vermífugos, antibióticos veterinários)
+- "Sal / Suplemento" (sal mineral, proteinado, suplemento bovino)
+- "Combustível / Lubrificante" (diesel, gasolina, óleo, lubrificante)
+- "Peça / Manutenção" (peças mecânicas, filtros, correias, rolamentos)
+- "Mão de Obra" (serviços, mão de obra, aplicação, plantio)
+- "Equipamento" (máquinas, implementos, equipamentos agrícolas)
+- "Infraestrutura" (construção, cercas, silos, benfeitorias)
+- "Material de Escritório" (papelaria, informática, escritório)
+- "Limpeza / Higiene" (produtos de limpeza, desinfetantes)
+- "Embalagem / Armazenagem" (sacarias, big bags, embalagens)
+- "Serviço" (consultoria, frete, serviços gerais)
+- "Outros" (para itens que não se encaixam nas categorias acima)
 
 Regras:
 - forma_pagamento: detecte palavras como "CRÉDITO", "DÉBITO", "PIX", "BOLETO", "DINHEIRO", "ESPÉCIE"
 - valor_total: use o valor final pago (após descontos), como número float
 - confianca: sua confiança de 0.0 a 1.0 na extração
 - Se um campo não for encontrado, use null
-- Para itens: inclua todos os produtos/serviços listados
+- Para itens: inclua todos os produtos/serviços listados com sua categoria
 - NÃO invente dados. Se não encontrar, use null
 """
 
@@ -107,6 +126,7 @@ def parse_extraction_to_schema(data: dict) -> NotaFiscalCreate:
             unidade=item.get("unidade"),
             valor_unitario=item.get("valor_unitario"),
             valor_total=item.get("valor_total"),
+            categoria_produto=item.get("categoria_produto"),
         )
         for item in data.get("itens", [])
     ]

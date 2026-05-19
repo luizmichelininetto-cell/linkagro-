@@ -53,6 +53,31 @@ def _validate_rateios(rateios: List[RateioBase]) -> List[RateioBase]:
     return rateios
 
 
+# ── Parcelas ───────────────────────────────────────────────────────────────
+
+class ParcelaOut(BaseModel):
+    id: int
+    nota_id: int
+    numero: int
+    valor: float
+    data_vencimento: str
+    status_pagamento: StatusPagamento
+    data_pagamento: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AplicarParcelasRequest(BaseModel):
+    num_parcelas: int = Field(..., ge=2, le=48)
+    data_primeira_parcela: str  # DD/MM/AAAA
+
+
+class AtualizarParcelaRequest(BaseModel):
+    status_pagamento: StatusPagamento
+    data_pagamento: Optional[str] = None
+
+
 # ── Itens ──────────────────────────────────────────────────────────────────
 
 class ItemNFBase(BaseModel):
@@ -61,6 +86,7 @@ class ItemNFBase(BaseModel):
     unidade: Optional[str] = None
     valor_unitario: Optional[float] = None
     valor_total: Optional[float] = None
+    categoria_produto: Optional[str] = None
 
 
 class ItemNFCreate(ItemNFBase):
@@ -93,6 +119,8 @@ class NotaFiscalBase(BaseModel):
     status_pagamento: Optional[StatusPagamento] = StatusPagamento.PENDENTE
     data_vencimento: Optional[str] = None
     data_pagamento: Optional[str] = None
+    num_parcelas: Optional[int] = None
+    valor_parcela: Optional[float] = None
 
 
 class NotaFiscalCreate(NotaFiscalBase):
@@ -115,6 +143,7 @@ class NotaFiscalOut(NotaFiscalBase):
     id: int
     itens: List[ItemNFOut] = []
     rateios: List[RateioNotaOut] = []
+    parcelas: List[ParcelaOut] = []
     criado_em: datetime
     atualizado_em: datetime
 
@@ -132,6 +161,7 @@ class NotaFiscalSummary(BaseModel):
     status_pagamento: Optional[StatusPagamento]
     data_vencimento: Optional[str]
     data_pagamento: Optional[str]
+    num_parcelas: Optional[int] = None
     criado_em: datetime
 
     class Config:

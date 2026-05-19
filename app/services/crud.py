@@ -2,16 +2,32 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
-from app.models.nota_fiscal import NotaFiscal, ItemNF, RateioNota, RateioItem, FormaPagamento, CentroCusto
-from app.schemas.nota_fiscal import NotaFiscalCreate, AplicarRateioNotaRequest, AplicarRateioItemRequest, AtualizarPagamentoRequest
+from app.models.nota_fiscal import NotaFiscal, ItemNF, RateioNota, RateioItem, FormaPagamento, CentroCusto, Parcela
+from app.schemas.nota_fiscal import (
+    NotaFiscalCreate, AplicarRateioNotaRequest, AplicarRateioItemRequest,
+    AtualizarPagamentoRequest, AplicarParcelasRequest, AtualizarParcelaRequest,
+)
 from app.models.nota_fiscal import StatusPagamento
-from datetime import date
+from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
 
 
 def _calc_valor(base: Optional[float], percentual: float) -> Optional[float]:
     if base is None:
         return None
     return round(base * percentual / 100, 2)
+
+
+def _parse_data_br(s: Optional[str]) -> Optional[date]:
+    """Parse DD/MM/AAAA → date."""
+    if not s:
+        return None
+    for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except ValueError:
+            continue
+    return None
 
 
 async def create_nota(db: AsyncSession, data: NotaFiscalCreate, texto_ocr: str = None, imagem_path: str = None) -> NotaFiscal:
@@ -45,6 +61,7 @@ async def create_nota(db: AsyncSession, data: NotaFiscalCreate, texto_ocr: str =
             unidade=item_data.unidade,
             valor_unitario=item_data.valor_unitario,
             valor_total=item_data.valor_total,
+            categoria_produto=item_data.categoria_produto,
         )
         db.add(item)
         await db.flush()
@@ -67,6 +84,7 @@ async def get_nota(db: AsyncSession, nota_id: int) -> Optional[NotaFiscal]:
         .options(
             selectinload(NotaFiscal.rateios),
             selectinload(NotaFiscal.itens).selectinload(ItemNF.rateios),
+            selectinload(NotaFiscal.parcelas),
         )
         .where(NotaFiscal.id == nota_id)
     )
@@ -126,6 +144,7 @@ async def list_notas_para_export(
         .options(
             selectinload(NotaFiscal.rateios),
             selectinload(NotaFiscal.itens).selectinload(ItemNF.rateios),
+            selectinload(NotaFiscal.parcelas),
         )
     )
     if fornecedor:
@@ -170,7 +189,6 @@ async def atualizar_pagamento(db: AsyncSession, nota_id: int, payload: Atualizar
     nota.status_pagamento = payload.status_pagamento
     nota.data_vencimento = payload.data_vencimento
     nota.data_pagamento = payload.data_pagamento
-    # auto-mark overdue if status not overridden
     if payload.status_pagamento == StatusPagamento.PENDENTE and payload.data_vencimento:
         try:
             venc = date.fromisoformat(payload.data_vencimento)
@@ -180,6 +198,65 @@ async def atualizar_pagamento(db: AsyncSession, nota_id: int, payload: Atualizar
             pass
     await db.commit()
     return await get_nota(db, nota_id)
+
+
+async def criar_parcelas(db: AsyncSession, nota_id: int, payload: AplicarParcelasRequest) -> Optional[NotaFiscal]:
+    nota = await get_nota(db, nota_id)
+    if not nota:
+        return None
+    # Remove parcelas existentes
+    await db.execute(delete(Parcela).where(Parcela.nota_id == nota_id))
+    valor_parcela = round((nota.valor_total or 0) / payload.num_parcelas, 2)
+    data_base = _parse_data_br(payload.data_primeira_parcela)
+    if not data_base:
+        raise ValueError("Data da primeira parcela inválida. Use DD/MM/AAAA.")
+    for i in range(payload.num_parcelas):
+        venc = data_base + relativedelta(months=i)
+        db.add(Parcela(
+            nota_id=nota_id,
+            numero=i + 1,
+            valor=valor_parcela,
+            data_vencimento=venc.strftime("%d/%m/%Y"),
+            status_pagamento=StatusPagamento.PENDENTE,
+        ))
+    nota.num_parcelas = payload.num_parcelas
+    nota.valor_parcela = valor_parcela
+    await db.commit()
+    return await get_nota(db, nota_id)
+
+
+async def atualizar_parcela(db: AsyncSession, parcela_id: int, payload: AtualizarParcelaRequest) -> Optional[Parcela]:
+    result = await db.execute(select(Parcela).where(Parcela.id == parcela_id))
+    parcela = result.scalar_one_or_none()
+    if not parcela:
+        return None
+    parcela.status_pagamento = payload.status_pagamento
+    parcela.data_pagamento = payload.data_pagamento
+    await db.commit()
+    result = await db.execute(select(Parcela).where(Parcela.id == parcela_id))
+    return result.scalar_one_or_none()
+
+
+async def list_parcelas(db: AsyncSession, apenas_pendentes: bool = False) -> List[Parcela]:
+    query = select(Parcela).options(selectinload(Parcela.nota))
+    if apenas_pendentes:
+        query = query.where(Parcela.status_pagamento != StatusPagamento.PAGO)
+    query = query.order_by(Parcela.data_vencimento)
+    result = await db.execute(query)
+    return list(result.scalars().all())
+
+
+async def list_itens_por_categoria(db: AsyncSession) -> List[ItemNF]:
+    """Retorna todos os itens com centro de custo via rateio."""
+    result = await db.execute(
+        select(ItemNF)
+        .options(
+            selectinload(ItemNF.rateios),
+            selectinload(ItemNF.nota),
+        )
+        .order_by(ItemNF.categoria_produto)
+    )
+    return list(result.scalars().all())
 
 
 async def aplicar_rateio_item(db: AsyncSession, item_id: int, payload: AplicarRateioItemRequest) -> Optional[ItemNF]:

@@ -7,7 +7,7 @@ from pathlib import Path
 import logging
 
 from app.database import init_db
-from app.routes import scan, notas, exportar, dashboard
+from app.routes import scan, notas, exportar, dashboard, insumos
 from app.config import settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
@@ -34,6 +34,7 @@ app.include_router(scan.router)
 app.include_router(notas.router)
 app.include_router(exportar.router)
 app.include_router(dashboard.router)
+app.include_router(insumos.router)
 
 
 @app.get("/health", tags=["Health"])

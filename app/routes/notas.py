@@ -9,6 +9,7 @@ from app.schemas.nota_fiscal import (
     AplicarRateioNotaRequest, AplicarRateioItemRequest,
     RateioNotaOut, RateioItemOut,
     AtualizarPagamentoRequest,
+    AplicarParcelasRequest, AtualizarParcelaRequest, ParcelaOut,
 )
 from app.models.nota_fiscal import FormaPagamento, CentroCusto, StatusPagamento
 
@@ -51,6 +52,27 @@ async def atualizar_pagamento(nota_id: int, payload: AtualizarPagamentoRequest, 
     if not nota:
         raise HTTPException(404, "Nota fiscal não encontrada")
     return nota
+
+
+@router.post("/{nota_id}/parcelas", response_model=NotaFiscalOut,
+             summary="Criar/substituir parcelas de compra parcelada no cartão")
+async def criar_parcelas(nota_id: int, payload: AplicarParcelasRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        nota = await crud.criar_parcelas(db, nota_id, payload)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    if not nota:
+        raise HTTPException(404, "Nota fiscal não encontrada")
+    return nota
+
+
+@router.patch("/parcelas/{parcela_id}", response_model=ParcelaOut,
+              summary="Marcar parcela como paga")
+async def atualizar_parcela(parcela_id: int, payload: AtualizarParcelaRequest, db: AsyncSession = Depends(get_db)):
+    parcela = await crud.atualizar_parcela(db, parcela_id, payload)
+    if not parcela:
+        raise HTTPException(404, "Parcela não encontrada")
+    return parcela
 
 
 @router.patch("/{nota_id}/rateio", response_model=NotaFiscalOut,

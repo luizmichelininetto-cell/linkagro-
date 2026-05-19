@@ -38,6 +38,26 @@ SUBCATEGORIAS = {
     "sede":      ["Manutenção", "Limpeza", "Investimento"],
 }
 
+# Categorias de produto por centro de custo (para classificação automática)
+CATEGORIAS_PRODUTO = [
+    "Defensivo Agrícola",
+    "Fertilizante / Adubo",
+    "Semente",
+    "Ração / Alimentação Animal",
+    "Medicamento / Vacina",
+    "Sal / Suplemento",
+    "Combustível / Lubrificante",
+    "Peça / Manutenção",
+    "Mão de Obra",
+    "Equipamento",
+    "Infraestrutura",
+    "Material de Escritório",
+    "Limpeza / Higiene",
+    "Embalagem / Armazenagem",
+    "Serviço",
+    "Outros",
+]
+
 
 class NotaFiscal(Base):
     __tablename__ = "notas_fiscais"
@@ -54,11 +74,15 @@ class NotaFiscal(Base):
     status_pagamento = Column(Enum(StatusPagamento), default=StatusPagamento.PENDENTE, nullable=False)
     data_vencimento = Column(String(20), nullable=True)
     data_pagamento = Column(String(20), nullable=True)
+    num_parcelas = Column(Integer, nullable=True)
+    valor_parcela = Column(Float, nullable=True)
     criado_em = Column(DateTime, default=datetime.utcnow)
     atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     itens = relationship("ItemNF", back_populates="nota", cascade="all, delete-orphan")
     rateios = relationship("RateioNota", back_populates="nota", cascade="all, delete-orphan")
+    parcelas = relationship("Parcela", back_populates="nota", cascade="all, delete-orphan",
+                            order_by="Parcela.numero")
 
 
 class ItemNF(Base):
@@ -71,9 +95,25 @@ class ItemNF(Base):
     unidade = Column(String(20), nullable=True)
     valor_unitario = Column(Float, nullable=True)
     valor_total = Column(Float, nullable=True)
+    categoria_produto = Column(String(60), nullable=True)
 
     nota = relationship("NotaFiscal", back_populates="itens")
     rateios = relationship("RateioItem", back_populates="item", cascade="all, delete-orphan")
+
+
+class Parcela(Base):
+    """Parcela de compra parcelada no cartão de crédito."""
+    __tablename__ = "parcelas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nota_id = Column(Integer, ForeignKey("notas_fiscais.id"), nullable=False)
+    numero = Column(Integer, nullable=False)
+    valor = Column(Float, nullable=False)
+    data_vencimento = Column(String(20), nullable=False)
+    status_pagamento = Column(Enum(StatusPagamento), default=StatusPagamento.PENDENTE, nullable=False)
+    data_pagamento = Column(String(20), nullable=True)
+
+    nota = relationship("NotaFiscal", back_populates="parcelas")
 
 
 class RateioNota(Base):

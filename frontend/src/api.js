@@ -36,6 +36,14 @@ export const exportCsv = (params) =>
 export const atualizarPagamento = (id, payload) =>
   api.patch(`/notas/${id}/pagamento`, payload);
 
+export const criarParcelas = (id, payload) =>
+  api.post(`/notas/${id}/parcelas`, payload);
+
+export const atualizarParcela = (parcelaId, payload) =>
+  api.patch(`/notas/parcelas/${parcelaId}`, payload);
+
 export const getDashboard = () => api.get("/dashboard/");
+export const getInsumos = () => api.get("/insumos/");
+export const getGastosMensais = () => api.get("/insumos/mensal/");
 
 export default api;
