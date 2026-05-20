@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FilePlus, Check, ArrowLeft } from "lucide-react";
-import { criarNotaManual } from "../api";
+import { criarNotaManual, criarParcelas } from "../api";
 
 const FORMAS = ["desconhecido", "pix", "boleto", "credito", "debito", "dinheiro"];
 const FORMA_LABEL = { desconhecido: "Não informado", pix: "PIX", boleto: "Boleto", credito: "Cartão de Crédito", debito: "Cartão de Débito", dinheiro: "Dinheiro" };
@@ -25,6 +25,7 @@ export default function NotaManualPage() {
     status_pagamento: "pendente",
   });
 
+  const [parcelas, setParcelas] = useState({ num: "2", data_primeira: "" });
   const [itens, setItens] = useState([{ ...VAZIO }]);
   const [usarRateioNota, setUsarRateioNota] = useState(false);
   const [rateioNota, setRateioNota] = useState([{ centro_custo: "lavoura", percentual: 100 }]);
@@ -47,6 +48,12 @@ export default function NotaManualPage() {
 
     if (usarRateioNota && Math.abs(somaRateio - 100) > 0.01) {
       setErro(`Soma do rateio deve ser 100%. Atual: ${somaRateio.toFixed(1)}%`);
+      return;
+    }
+
+    const isCredito = form.forma_pagamento === "credito";
+    if (isCredito && parcelas.num >= 2 && !parcelas.data_primeira) {
+      setErro("Informe a data da primeira parcela.");
       return;
     }
 
@@ -75,6 +82,17 @@ export default function NotaManualPage() {
       };
 
       const { data } = await criarNotaManual(payload);
+
+      // Cria parcelas automáticas se cartão de crédito
+      if (isCredito && parseInt(parcelas.num) >= 2 && parcelas.data_primeira) {
+        const [ano, mes, dia] = parcelas.data_primeira.split("-");
+        const dataBR = `${dia}/${mes}/${ano}`;
+        await criarParcelas(data.id, {
+          num_parcelas: parseInt(parcelas.num),
+          data_primeira_parcela: dataBR,
+        });
+      }
+
       navigate(`/app/notas/${data.id}`);
     } catch (err) {
       setErro(err?.response?.data?.detail || "Erro ao salvar nota.");
@@ -133,11 +151,47 @@ export default function NotaManualPage() {
                 <option value="pago">Pago</option>
               </select>
             </div>
-            <div>
-              <label style={labelStyle}>Data de Vencimento</label>
-              <input type="date" value={form.data_vencimento} onChange={(e) => set("data_vencimento", e.target.value)} style={inputStyle} />
-            </div>
+            {form.forma_pagamento !== "credito" && (
+              <div>
+                <label style={labelStyle}>Data de Vencimento</label>
+                <input type="date" value={form.data_vencimento} onChange={(e) => set("data_vencimento", e.target.value)} style={inputStyle} />
+              </div>
+            )}
           </div>
+
+          {/* Parcelas — só para crédito */}
+          {form.forma_pagamento === "credito" && (
+            <div style={{ marginTop: 16, padding: 14, background: "#f0fdf4", borderRadius: 10, border: "1px solid #bbf7d0" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#16a34a", marginBottom: 12 }}>
+                💳 Parcelamento no Cartão
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                <div>
+                  <label style={labelStyle}>Nº de Parcelas</label>
+                  <input type="number" min="2" max="48" value={parcelas.num}
+                    onChange={(e) => setParcelas((p) => ({ ...p, num: e.target.value }))}
+                    style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>1ª Parcela em</label>
+                  <input type="date" value={parcelas.data_primeira}
+                    onChange={(e) => setParcelas((p) => ({ ...p, data_primeira: e.target.value }))}
+                    style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Valor por Parcela</label>
+                  <div style={{ ...inputStyle, background: "#f8fafc", color: "#475569", fontWeight: 600 }}>
+                    {form.valor_total && parseInt(parcelas.num) >= 2
+                      ? `R$ ${(parseFloat(form.valor_total) / parseInt(parcelas.num)).toFixed(2)}`
+                      : "—"}
+                  </div>
+                </div>
+              </div>
+              <div style={{ fontSize: 12, color: "#64748b", marginTop: 8 }}>
+                As parcelas serão lançadas automaticamente como despesas futuras.
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Itens */}
