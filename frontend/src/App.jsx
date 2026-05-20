@@ -143,7 +143,7 @@ function AppLayout() {
 
       <main className="main">
         <Routes>
-          <Route index element={<ScanPage />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="notas" element={<NotasPage />} />
           <Route path="notas/:id" element={<DetalhePage />} />
           <Route path="contas" element={<ContasAPagarPage />} />
