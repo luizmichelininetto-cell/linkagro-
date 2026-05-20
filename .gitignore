@@ -6,4 +6,3 @@ nf_scanner.db
 uploads/*
 !uploads/.gitkeep
 frontend/node_modules/
-static/

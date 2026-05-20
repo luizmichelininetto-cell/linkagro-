@@ -1,0 +1,19 @@
+{
+  "name": "L.M. Agro — Agricultura & Gestão",
+  "short_name": "L.M. Agro",
+  "description": "Sistema de gestão de notas fiscais e financeiro para o agronegócio",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#1a4010",
+  "theme_color": "#1a4010",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,10 +1,3 @@
-FROM node:20-slim AS frontend-build
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm ci
-COPY frontend/ ./
-RUN npm run build
-
 FROM python:3.11-slim
 WORKDIR /app
 
@@ -18,7 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ ./app/
 COPY main.py ./
-COPY --from=frontend-build /app/static ./static
+COPY static/ ./static/
 
 RUN mkdir -p uploads
 
