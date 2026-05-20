@@ -100,8 +100,13 @@ function AppLayout() {
       <aside className="sidebar">
         <div className="sidebar-logo"><SidebarLogo /></div>
         <nav>
+          {temPermissao("ver_dashboard") && (
+            <NavLink to="/app/dashboard" className={({ isActive }) => isActive ? "active" : ""}>
+              <LayoutDashboard size={16} /> Painel Financeiro
+            </NavLink>
+          )}
           {temPermissao("escanear") && (
-            <NavLink to="/app" end className={({ isActive }) => isActive ? "active" : ""}>
+            <NavLink to="/app/escanear" className={({ isActive }) => isActive ? "active" : ""}>
               <ScanLine size={16} /> Escanear
             </NavLink>
           )}
@@ -118,11 +123,6 @@ function AppLayout() {
           {temPermissao("ver_insumos") && (
             <NavLink to="/app/insumos" className={({ isActive }) => isActive ? "active" : ""}>
               <Package size={16} /> Insumos
-            </NavLink>
-          )}
-          {temPermissao("ver_dashboard") && (
-            <NavLink to="/app/dashboard" className={({ isActive }) => isActive ? "active" : ""}>
-              <LayoutDashboard size={16} /> Painel Financeiro
             </NavLink>
           )}
           {temPermissao("exportar") && (
@@ -144,6 +144,7 @@ function AppLayout() {
       <main className="main">
         <Routes>
           <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="escanear" element={<ScanPage />} />
           <Route path="notas" element={<NotasPage />} />
           <Route path="notas/:id" element={<DetalhePage />} />
           <Route path="contas" element={<ContasAPagarPage />} />
