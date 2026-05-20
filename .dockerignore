@@ -6,4 +6,3 @@ nf_scanner.db
 uploads/*
 frontend/node_modules
 frontend/dist
-static
