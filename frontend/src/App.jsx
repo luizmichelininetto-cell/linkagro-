@@ -15,6 +15,7 @@ import InsumoPage from "./pages/InsumoPage";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import UsuariosPage from "./pages/UsuariosPage";
+import NotaManualPage from "./pages/NotaManualPage";
 import "./App.css";
 
 function SidebarLogo() {
@@ -152,6 +153,7 @@ function AppLayout() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="exportar" element={<ExportPage />} />
           <Route path="usuarios" element={<UsuariosPage />} />
+          <Route path="notas/nova" element={<NotaManualPage />} />
         </Routes>
       </main>
     </div>

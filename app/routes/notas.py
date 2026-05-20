@@ -5,7 +5,7 @@ from app.database import get_db
 from app.services import crud
 from app.auth import verify_api_key
 from app.schemas.nota_fiscal import (
-    NotaFiscalOut, NotaFiscalSummary,
+    NotaFiscalOut, NotaFiscalSummary, NotaFiscalCreate,
     AplicarRateioNotaRequest, AplicarRateioItemRequest,
     RateioNotaOut, RateioItemOut,
     AtualizarPagamentoRequest,
@@ -14,6 +14,12 @@ from app.schemas.nota_fiscal import (
 from app.models.nota_fiscal import FormaPagamento, CentroCusto, StatusPagamento
 
 router = APIRouter(prefix="/notas", tags=["Notas Fiscais"], dependencies=[Depends(verify_api_key)])
+
+
+@router.post("/", response_model=NotaFiscalOut, status_code=201)
+async def criar_nota_manual(body: NotaFiscalCreate, db: AsyncSession = Depends(get_db)):
+    """Cria uma nota fiscal manualmente sem escanear arquivo."""
+    return await crud.create_nota(db, body)
 
 
 @router.get("/", response_model=List[NotaFiscalSummary])

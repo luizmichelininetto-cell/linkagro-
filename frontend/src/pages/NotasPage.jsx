@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Trash2, Search } from "lucide-react";
+import { FileText, Trash2, Search, FilePlus } from "lucide-react";
 import { listNotas, deleteNota } from "../api";
 
 const FORMA_LABEL = {
@@ -50,7 +50,13 @@ export default function NotasPage() {
 
   return (
     <>
-      <div className="page-title"><FileText size={22} /> Notas Fiscais</div>
+      <div className="page-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}><FileText size={22} /> Notas Fiscais</span>
+        <button className="btn btn-primary" onClick={() => navigate("/app/notas/nova")}
+          style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
+          <FilePlus size={15} /> Nova Nota Manual
+        </button>
+      </div>
 
       <div className="filters">
         <div>

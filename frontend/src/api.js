@@ -35,6 +35,7 @@ export const scanNota = (file) => {
   return api.post("/scan/", form);
 };
 
+export const criarNotaManual = (payload) => api.post("/notas/", payload);
 export const listNotas = (params) => api.get("/notas/", { params });
 export const getNota = (id) => api.get(`/notas/${id}`);
 export const deleteNota = (id) => api.delete(`/notas/${id}`);
