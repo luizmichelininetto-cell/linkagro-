@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
     API_KEY: str = ""
     DATABASE_URL: str = "sqlite+aiosqlite:///./nf_scanner.db"
+    SECRET_KEY: str = "gestao-fazendas-secret-key-change-in-production"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 dias
+    SUPER_ADMIN_EMAIL: str = "admin@gestaofazendas.com"
+    SUPER_ADMIN_SENHA: str = "admin123"
     APP_ENV: str = "development"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000

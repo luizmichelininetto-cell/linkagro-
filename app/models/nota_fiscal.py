@@ -78,11 +78,13 @@ class NotaFiscal(Base):
     valor_parcela = Column(Float, nullable=True)
     criado_em = Column(DateTime, default=datetime.utcnow)
     atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    fazenda_id = Column(Integer, ForeignKey("fazendas.id"), nullable=True, index=True)
 
     itens = relationship("ItemNF", back_populates="nota", cascade="all, delete-orphan")
     rateios = relationship("RateioNota", back_populates="nota", cascade="all, delete-orphan")
     parcelas = relationship("Parcela", back_populates="nota", cascade="all, delete-orphan",
                             order_by="Parcela.numero")
+    fazenda = relationship("Fazenda", back_populates="notas")
 
 
 class ItemNF(Base):

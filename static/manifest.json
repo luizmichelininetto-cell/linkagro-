@@ -1,7 +1,7 @@
 {
-  "name": "L.M. Agro — Agricultura & Gestão",
-  "short_name": "L.M. Agro",
-  "description": "Sistema de gestão de notas fiscais e financeiro para o agronegócio",
+  "name": "Gestão de Fazendas",
+  "short_name": "Gestão Fazendas",
+  "description": "Sistema de gestão de notas fiscais, finanças e insumos para fazendas",
   "start_url": "/app",
   "display": "standalone",
   "background_color": "#1a4010",

@@ -16,6 +16,7 @@ export default defineConfig({
       "/exportar": "http://localhost:8000",
       "/dashboard": "http://localhost:8000",
       "/insumos": "http://localhost:8000",
+      "/auth": "http://localhost:8000",
     },
   },
 });

@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -126,7 +127,7 @@ def _item_dict(item: ItemNF) -> dict:
     }
 
 
-def _parse_mes(data_str: str) -> str | None:
+def _parse_mes(data_str: str) -> "Optional[str]":
     """Converte DD/MM/AAAA ou AAAA-MM-DD para AAAA-MM."""
     if not data_str:
         return None

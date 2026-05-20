@@ -1,19 +1,34 @@
 import axios from "axios";
 
-const KEY_STORAGE = "nf_api_key";
+const KEY_TOKEN = "gf_token";
 
-export const getApiKey = () => localStorage.getItem(KEY_STORAGE) || "";
-export const setApiKey = (k) => localStorage.setItem(KEY_STORAGE, k);
-export const clearApiKey = () => localStorage.removeItem(KEY_STORAGE);
+export const getToken = () => localStorage.getItem(KEY_TOKEN) || "";
+export const setToken = (t) => localStorage.setItem(KEY_TOKEN, t);
+export const clearToken = () => localStorage.removeItem(KEY_TOKEN);
+
+// backward compat
+export const getApiKey = getToken;
+export const setApiKey = setToken;
+export const clearApiKey = clearToken;
 
 const api = axios.create({ baseURL: "" });
 
 api.interceptors.request.use((config) => {
-  const key = getApiKey();
-  if (key) config.headers["X-API-Key"] = key;
+  const token = getToken();
+  if (token) config.headers["Authorization"] = `Bearer ${token}`;
   return config;
 });
 
+// Auth
+export const login = (email, senha) => api.post("/auth/login", { email, senha });
+export const getMe = () => api.get("/auth/me");
+export const listarUsuarios = () => api.get("/auth/usuarios");
+export const criarUsuario = (payload) => api.post("/auth/usuarios", payload);
+export const atualizarUsuario = (id, payload) => api.patch(`/auth/usuarios/${id}`, payload);
+export const listarFazendas = () => api.get("/auth/fazendas");
+export const criarFazenda = (payload) => api.post("/auth/fazendas", payload);
+
+// Notas
 export const scanNota = (file) => {
   const form = new FormData();
   form.append("file", file);
@@ -35,10 +50,8 @@ export const exportCsv = (params) =>
 
 export const atualizarPagamento = (id, payload) =>
   api.patch(`/notas/${id}/pagamento`, payload);
-
 export const criarParcelas = (id, payload) =>
   api.post(`/notas/${id}/parcelas`, payload);
-
 export const atualizarParcela = (parcelaId, payload) =>
   api.patch(`/notas/parcelas/${parcelaId}`, payload);
 
