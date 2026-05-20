@@ -1,6 +1,6 @@
 import pytesseract
+import fitz  # pymupdf
 from PIL import Image, ImageEnhance, ImageFilter
-from pdf2image import convert_from_bytes
 import io
 import base64
 from pathlib import Path
@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 import shutil
 pytesseract.pytesseract.tesseract_cmd = shutil.which("tesseract") or "/opt/homebrew/bin/tesseract"
 TESSERACT_CONFIG = "--oem 3 --psm 6 -l por+eng"
-POPPLER_PATH = "/opt/homebrew/bin"
 
 
 def _preprocess_image(image: Image.Image) -> Image.Image:
@@ -33,10 +32,22 @@ def _ocr_image(image: Image.Image) -> str:
     return pytesseract.image_to_string(processed, config=TESSERACT_CONFIG)
 
 
+def _pdf_to_images(pdf_bytes: bytes) -> list[Image.Image]:
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    images = []
+    for page in doc:
+        mat = fitz.Matrix(200 / 72, 200 / 72)  # 200 DPI
+        pix = page.get_pixmap(matrix=mat)
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        images.append(img)
+    doc.close()
+    return images
+
+
 async def extract_text_from_bytes(image_bytes: bytes, filename: str = "") -> str:
     try:
         if filename.lower().endswith(".pdf"):
-            pages = convert_from_bytes(image_bytes, dpi=200, poppler_path=POPPLER_PATH)
+            pages = _pdf_to_images(image_bytes)
             texts = [_ocr_image(page) for page in pages]
             return "\n\n".join(t.strip() for t in texts if t.strip())
         image = Image.open(io.BytesIO(image_bytes))
