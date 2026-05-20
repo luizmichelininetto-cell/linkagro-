@@ -16,6 +16,21 @@ const CC_COLORS = {
 const STATUS_COLORS = { pendente: "#f59e0b", pago: "#16a34a", vencido: "#dc2626" };
 const STATUS_LABEL = { pendente: "Pendente", pago: "Pago", vencido: "Vencido" };
 
+const MESES_BR = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const formatMes = (mes) => {
+  // "2026-04" → "Abr/26"
+  const [ano, m] = (mes || "").split("-");
+  if (!ano || !m) return mes;
+  return `${MESES_BR[parseInt(m, 10) - 1]}/${ano.slice(2)}`;
+};
+const formatData = (data) => {
+  // "2026-06-11" → "11/06/2026" ou "11/06/2026" já no formato BR
+  if (!data) return "—";
+  if (data.includes("/")) return data; // já em BR
+  const [ano, mes, dia] = data.split("-");
+  return `${dia}/${mes}/${ano}`;
+};
+
 function Card({ title, children, style }) {
   return (
     <div className="card" style={{ ...style }}>
@@ -113,14 +128,16 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie data={statusPieData} dataKey="value" nameKey="name"
-                  cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`}>
+                  cx="50%" cy="50%" outerRadius={75} innerRadius={35}
+                  label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                  labelLine={false}>
                   {statusPieData.map((entry, index) => (
                     <Cell key={index}
                       fill={STATUS_COLORS[Object.keys(STATUS_LABEL).find((k) => STATUS_LABEL[k] === entry.name)] || "#94a3b8"} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v) => `R$ ${v.toFixed(2)}`} />
+                <Tooltip formatter={(v, name) => [`R$ ${v.toFixed(2)}`, name]} />
+                <Legend formatter={(name) => <span style={{ fontSize: 12 }}>{name}</span>} />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -142,7 +159,7 @@ export default function DashboardPage() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={dadosFiltrados} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
+                <XAxis dataKey="mes" tick={{ fontSize: 10 }} tickFormatter={formatMes} />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v, name) => [`R$ ${v.toFixed(2)}`, name === "notas_emitidas" ? "Notas emitidas" : "Parcelas devidas"]} />
                 <Bar dataKey="notas_emitidas" fill="#2563eb" radius={[4, 4, 0, 0]} />
@@ -173,7 +190,7 @@ export default function DashboardPage() {
                     <td style={{ color: "#94a3b8" }}>{a.id}</td>
                     <td>{a.fornecedor || "—"}</td>
                     <td>{a.valor_total != null ? `R$ ${a.valor_total.toFixed(2)}` : "—"}</td>
-                    <td style={{ fontSize: 13 }}>{a.data_vencimento}</td>
+                    <td style={{ fontSize: 13 }}>{formatData(a.data_vencimento)}</td>
                     <td>
                       <span style={{
                         fontSize: 12, fontWeight: 600,
